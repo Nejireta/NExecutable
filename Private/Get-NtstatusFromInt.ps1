@@ -7,14 +7,24 @@
 
     process {
         try {
-            [Object[]]$NtstatusList = Import-Csv -Path $ReferenceFilePath
-            return $NtstatusList | Where-Object { $_.IntValue -eq $Int }
+            [Object[]]$ntStatusList = Import-Csv -Path $ReferenceFilePath
+            $matchedIndex = $ntStatusList.Where({$_.IntValue -eq $Int})
+            if (![string]::IsNullOrEmpty($matchedIndex)) {
+                return $matchedIndex
+            }
+
+            return [PSCustomObject]@{
+                Status      = 'UNKNOWN'
+                IntValue    = $Int
+                HexValue    = Convert-IntToHex -Int $Int
+                Description = 'UNKNOWN'
+            }
         }
         catch {
             throw
         }
         finally {
-            $NtstatusList.Clear()
+            $ntStatusList.Clear()
         }
     }
 }

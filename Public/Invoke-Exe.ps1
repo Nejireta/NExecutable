@@ -18,7 +18,9 @@
 
     process {
         try {
-            $result = [System.Collections.Generic.List[string]]::new()
+            $result = [System.Collections.Generic.List[PSCustomObject]]::new()
+            $standardOutput = [System.Collections.Generic.List[string]]::new()
+            $standardError = [System.Collections.Generic.List[string]]::new()
             $processStartInfo = [System.Diagnostics.ProcessStartInfo]::new()
             $processStartInfo.FileName = $FilePath
             $processStartInfo.WorkingDirectory = [System.IO.Directory]::GetParent($FilePath).FullName
@@ -54,7 +56,8 @@
                     while (! $streamReaderStandardOutput.ReadAsync($charResult, 0, $streamReaderStandardOutput.BaseStream.Length).AsyncWaitHandle.WaitOne(100)) {}
 
                     $StandardOutputLine = $streamReaderStandardOutput.ReadToEndAsync().GetAwaiter().GetResult()
-                    $result.Add($StandardOutputLine)
+                    #$OutToPipeline ? $standardOutput.Add($StandardOutputLine) : [System.Console]::WriteLine($StandardOutputLine)
+                    $standardOutput.Add($StandardOutputLine)
                     [System.Console]::WriteLine($StandardOutputLine)
                 }
 
@@ -66,7 +69,8 @@
                     while (! $streamReaderStandardError.ReadAsync($charResult, 0, $streamReaderStandardError.BaseStream.Length).AsyncWaitHandle.WaitOne(100)) {}
 
                     $StandardErrorLine = $streamReaderStandardError.ReadToEndAsync().GetAwaiter().GetResult()
-                    $result.Add($StandardErrorLine)
+                    #$OutToPipeline ? $standardError.Add($StandardErrorLine) : [System.Console]::WriteLine($StandardErrorLine)
+                    $standardError.Add($StandardErrorLine)
                     [System.Console]::WriteLine($StandardErrorLine)
                     [Console]::ResetColor()
                 }
@@ -80,7 +84,18 @@
             [System.Console]::WriteLine("Int Value: [$($processExitCode.IntValue)]")
             [System.Console]::WriteLine("Hex Value: [$($processExitCode.HexValue)]")
             [System.Console]::WriteLine("Description: [$($processExitCode.Description)]")
+
             if ($OutToPipeline) {
+                $result.Add([PSCustomObject]@{
+                    StandardOutput = $standardOutput
+                    StandardError = $standardError
+                    ExitCode = [PSCustomObject]@{
+                        Status = $processExitCode.Status
+                        Int = $processExitCode.IntValue
+                        Hex = $processExitCode.HexValue
+                        Description = $processExitCode.Description
+                    }
+                })
                 return $result
             }
         }
