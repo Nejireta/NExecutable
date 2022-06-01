@@ -1,4 +1,4 @@
-# KExecutable
+# NExecutable
 .SYNOPSIS\
 &emsp;    Executable wrapper\
 .DESCRIPTION\
